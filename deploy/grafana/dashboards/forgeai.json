@@ -1,0 +1,1049 @@
+{
+ "uid": "forgeai",
+ "title": "ForgeAI: Inference Platform",
+ "schemaVersion": 39,
+ "refresh": "5s",
+ "time": {
+  "from": "now-30m",
+  "to": "now"
+ },
+ "tags": [
+  "forgeai"
+ ],
+ "panels": [
+  {
+   "type": "row",
+   "title": "Production SLOs",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 1
+   },
+   "collapsed": false
+  },
+  {
+   "type": "stat",
+   "title": "TTFT p95",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "red",
+        "value": 0.5
+       }
+      ]
+     }
+    }
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(forge_ttft_seconds_bucket[1m])))",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "stat",
+   "title": "P95 latency",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 4,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "red",
+        "value": 3
+       }
+      ]
+     }
+    }
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(forge_request_duration_seconds_bucket[1m])))",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "stat",
+   "title": "Tokens/sec",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       }
+      ]
+     }
+    }
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum(rate(forge_tokens_total{kind=\"completion\"}[1m]))",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "stat",
+   "title": "Error rate",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percentunit",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "red",
+        "value": 0.02
+       }
+      ]
+     }
+    }
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum(rate(forge_requests_total{code!=\"200\"}[1m])) / sum(rate(forge_requests_total[1m]))",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "stat",
+   "title": "GPU utilization",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       }
+      ]
+     }
+    }
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "avg(DCGM_FI_DEV_GPU_UTIL)",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "stat",
+   "title": "Cost / hour",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 20,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "currencyUSD",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       }
+      ]
+     }
+    }
+   },
+   "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum(rate(forge_cost_usd_total[5m])) * 3600",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "row",
+   "title": "Latency by model version",
+   "gridPos": {
+    "x": 0,
+    "y": 5,
+    "w": 24,
+    "h": 1
+   },
+   "collapsed": false
+  },
+  {
+   "type": "timeseries",
+   "title": "TTFT p95 by version",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 6,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "thresholdsStyle": {
+       "mode": "line+area"
+      }
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "red",
+        "value": 0.5
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "histogram_quantile(0.95, sum by (version, le) (rate(forge_ttft_seconds_bucket[1m])))",
+     "legendFormat": "{{version}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "E2E latency p95 by version",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 6,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "histogram_quantile(0.95, sum by (version, le) (rate(forge_request_duration_seconds_bucket[1m])))",
+     "legendFormat": "{{version}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "TPOT p50 by version",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 6,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "histogram_quantile(0.5, sum by (version, le) (rate(forge_tpot_seconds_bucket[1m])))",
+     "legendFormat": "{{version}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "row",
+   "title": "Traffic & rollout",
+   "gridPos": {
+    "x": 0,
+    "y": 14,
+    "w": 24,
+    "h": 1
+   },
+   "collapsed": false
+  },
+  {
+   "type": "timeseries",
+   "title": "Requests/sec by version",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 15,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum by (version) (rate(forge_requests_total[1m]))",
+     "legendFormat": "{{version}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "Canary weight",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 15,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "max by (version) (forge_canary_weight)",
+     "legendFormat": "{{version}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "Fallbacks & rejections",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 15,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum by (from_version, reason) (rate(forge_fallback_total[1m]))",
+     "legendFormat": "fallback from {{from_version}} ({{reason}})",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum by (reason) (rate(forge_rejected_total[1m]))",
+     "legendFormat": "rejected: {{reason}}",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "type": "row",
+   "title": "Admission & resilience",
+   "gridPos": {
+    "x": 0,
+    "y": 23,
+    "w": 24,
+    "h": 1
+   },
+   "collapsed": false
+  },
+  {
+   "type": "timeseries",
+   "title": "Gateway queue depth / in-flight",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 24,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "max by (backend) (forge_queue_depth)",
+     "legendFormat": "queue {{backend}}",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "max by (backend) (forge_inflight_requests)",
+     "legendFormat": "inflight {{backend}}",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "Circuit breakers (0 closed, 1 half-open, 2 open)",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 24,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "max by (backend) (forge_breaker_state)",
+     "legendFormat": "{{backend}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "Upstream errors",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 24,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum by (backend, kind) (rate(forge_upstream_errors_total[1m]))",
+     "legendFormat": "{{backend}} {{kind}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "row",
+   "title": "Model servers (vLLM / DCGM)",
+   "gridPos": {
+    "x": 0,
+    "y": 32,
+    "w": 24,
+    "h": 1
+   },
+   "collapsed": false
+  },
+  {
+   "type": "timeseries",
+   "title": "KV cache usage",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 33,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percentunit",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "avg by (version) ({__name__=\"vllm:gpu_cache_usage_perc\"})",
+     "legendFormat": "{{version}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "Running / waiting sequences",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 33,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum by (version) ({__name__=\"vllm:num_requests_running\"})",
+     "legendFormat": "running {{version}}",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum by (version) ({__name__=\"vllm:num_requests_waiting\"})",
+     "legendFormat": "waiting {{version}}",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "GPU memory used",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 33,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bytes",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum by (version) (DCGM_FI_DEV_FB_USED) * 1024 * 1024",
+     "legendFormat": "{{version}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "row",
+   "title": "Cost",
+   "gridPos": {
+    "x": 0,
+    "y": 41,
+    "w": 24,
+    "h": 1
+   },
+   "collapsed": false
+  },
+  {
+   "type": "timeseries",
+   "title": "Cost/hour by version",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 42,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "currencyUSD",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum by (version) (rate(forge_cost_usd_total[5m])) * 3600",
+     "legendFormat": "{{version}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "Avg completion tokens per request",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 42,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 8
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum by (version) (rate(forge_tokens_total{kind=\"completion\"}[5m])) / sum by (version) (rate(forge_requests_total[5m]))",
+     "legendFormat": "{{version}}",
+     "refId": "A"
+    }
+   ]
+  }
+ ],
+ "annotations": {
+  "list": [
+   {
+    "name": "Alerts",
+    "datasource": {
+     "type": "prometheus",
+     "uid": "prom"
+    },
+    "enable": true,
+    "iconColor": "red",
+    "expr": "ALERTS{alertstate=\"firing\"}",
+    "titleFormat": "{{alertname}}"
+   }
+  ]
+ }
+}

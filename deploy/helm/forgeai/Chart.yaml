@@ -1,0 +1,6 @@
+apiVersion: v2
+name: forgeai
+description: ForgeAI - fine-tune, evaluate, deploy and operate small language models on Kubernetes
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

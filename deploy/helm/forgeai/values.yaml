@@ -1,0 +1,71 @@
+image:
+  repository: ghcr.io/your-org/forgeai
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+# API keys: "key:tenant:role,..." (roles: viewer < operator < admin). Use an external secret in production.
+auth:
+  existingSecret: ""
+  apiKeys: "change-me-admin:platform:admin"
+  gatewayKey: change-me-admin   # key the gateway uses to read routing from the control plane
+
+tenants: "platform=100/200/2,acme=20/40/1,free-tier=5/10/0"   # tenant=rps/burst/priority (per gateway replica)
+
+slo:
+  ttftP95Seconds: 0.5
+  latencyP95Seconds: 3
+  errorRate: 0.02
+
+observability:
+  otlpEndpoint: http://otel-collector.observability:4318
+  prometheusUrl: http://prometheus-operated.monitoring:9090
+  tempoUrl: http://tempo.observability:3200
+  lokiUrl: http://loki-gateway.observability
+  serviceMonitor: true
+  prometheusRule: true
+
+agent:
+  llm: auto                  # auto | claude | heuristic
+  model: claude-opus-5-5
+  anthropicSecret: ""        # secret with key ANTHROPIC_API_KEY; empty = deterministic runbook only
+
+controlplane:
+  replicas: 1                # SQLite state: single writer. Move to Postgres before scaling out.
+  persistence: { size: 5Gi, storageClass: "" }
+  resources: { requests: { cpu: 200m, memory: 512Mi }, limits: { memory: 1Gi } }
+
+gateway:
+  replicas: 2
+  maxInflightPerBackend: 32
+  maxQueue: 64
+  resources: { requests: { cpu: 500m, memory: 512Mi }, limits: { memory: 1Gi } }
+  hpa: { enabled: true, min: 2, max: 10, targetCPU: 70 }
+
+# One vLLM Deployment per served model version. Adapters are LoRA weights produced by `forge model train`.
+modelServers:
+  - name: qwen-farm-v2
+    model: qwen-farm
+    version: v2
+    baseModel: Qwen/Qwen2.5-1.5B-Instruct
+    adapterPath: /adapters/qwen-farm-v2      # mounted from the adapters PVC
+    replicas: 1
+    maxNumSeqs: 64
+    gpuMemoryUtilization: 0.90
+    maxModelLen: 4096
+    gpu: { count: 1, type: nvidia.com/gpu }
+    nodeSelector: { nvidia.com/gpu.product: NVIDIA-L4 }
+
+vllm:
+  image: vllm/vllm-openai:v0.6.3
+  adaptersPvc: forgeai-adapters
+  hfTokenSecret: ""
+
+keda:
+  enabled: true
+  # scale model servers on queued sequences, the leading indicator of TTFT degradation
+  waitingThreshold: "8"
+  minReplicas: 1
+  maxReplicas: 4
+
+networkPolicy:
+  enabled: true

@@ -1,0 +1,40 @@
+{"prompt": "What soil pH range do most vegetable crops prefer?", "reference": "6.0 to 7.0"}
+{"prompt": "Which nutrient is most associated with leafy green growth?", "reference": "nitrogen"}
+{"prompt": "What does NPK stand for on a fertilizer label?", "reference": "nitrogen, phosphorus and potassium"}
+{"prompt": "Which nutrient deficiency causes interveinal chlorosis on young leaves?", "reference": "iron"}
+{"prompt": "Which nutrient deficiency causes yellowing of older leaves first?", "reference": "nitrogen"}
+{"prompt": "What is the main purpose of crop rotation?", "reference": "break pest and disease cycles"}
+{"prompt": "Which legume crop fixes nitrogen and is often rotated with maize?", "reference": "soybean"}
+{"prompt": "What bacteria form root nodules on legumes to fix nitrogen?", "reference": "rhizobium"}
+{"prompt": "What is the optimal soil temperature for maize germination, in Celsius?", "reference": "10"}
+{"prompt": "What irrigation method delivers water directly to the root zone with minimal losses?", "reference": "drip irrigation"}
+{"prompt": "What is the term for water lost from soil and plant surfaces combined?", "reference": "evapotranspiration"}
+{"prompt": "What does a tensiometer measure?", "reference": "soil water tension"}
+{"prompt": "What is the main cause of blossom end rot in tomatoes?", "reference": "calcium deficiency"}
+{"prompt": "Which fungal disease caused the Irish potato famine?", "reference": "late blight"}
+{"prompt": "What pathogen causes late blight?", "reference": "phytophthora infestans"}
+{"prompt": "What is integrated pest management usually abbreviated as?", "reference": "IPM"}
+{"prompt": "Which insect is the primary vector of tomato yellow leaf curl virus?", "reference": "whitefly"}
+{"prompt": "What is the economic threshold in pest management?", "reference": "pest density at which control should begin"}
+{"prompt": "What cover crop is commonly used to scavenge leftover nitrogen over winter?", "reference": "cereal rye"}
+{"prompt": "What does no-till farming primarily reduce?", "reference": "soil erosion"}
+{"prompt": "What is the term for the soil layer rich in organic matter at the surface?", "reference": "topsoil"}
+{"prompt": "Which soil texture class has the highest water holding capacity?", "reference": "clay"}
+{"prompt": "Which soil texture drains fastest?", "reference": "sand"}
+{"prompt": "What is cation exchange capacity a measure of?", "reference": "soil ability to hold positively charged nutrients"}
+{"prompt": "What liming material is commonly used to raise soil pH?", "reference": "agricultural lime"}
+{"prompt": "What is applied to lower soil pH in alkaline soils?", "reference": "elemental sulfur"}
+{"prompt": "What is the growing degree day base temperature commonly used for maize, in Celsius?", "reference": "10"}
+{"prompt": "At what growth stage is wheat most sensitive to water stress?", "reference": "flowering"}
+{"prompt": "What is the main symptom of potassium deficiency in many crops?", "reference": "leaf edge scorch"}
+{"prompt": "Which micronutrient deficiency causes little leaf in fruit trees?", "reference": "zinc"}
+{"prompt": "What practice involves growing two or more crops together on the same field?", "reference": "intercropping"}
+{"prompt": "What is the recommended seed depth for maize in most soils, in centimeters?", "reference": "5"}
+{"prompt": "What is the name for rice cultivation with alternate wetting and drying?", "reference": "AWD"}
+{"prompt": "What gas does flooded rice cultivation emit in large amounts?", "reference": "methane"}
+{"prompt": "What is the primary benefit of mulching around plants?", "reference": "conserves soil moisture"}
+{"prompt": "What measurement does an NDVI index from satellite imagery estimate?", "reference": "vegetation health"}
+{"prompt": "What is the main way to manage herbicide resistance in weeds?", "reference": "rotate herbicide modes of action"}
+{"prompt": "What is the term for the time between pesticide application and harvest?", "reference": "pre-harvest interval"}
+{"prompt": "Which crop is the major host of the fall armyworm in Africa?", "reference": "maize"}
+{"prompt": "What is the recommended action when a soil test shows low phosphorus?", "reference": "apply phosphorus fertilizer"}

@@ -1,0 +1,14 @@
+# forge model train --config data/sample/train_config.yaml
+base_model: Qwen/Qwen2.5-1.5B-Instruct
+dataset: data/sample/train.jsonl
+output_name: qwen-farm
+qlora: true          # 4-bit base weights (needs CUDA + bitsandbytes); set false for bf16 LoRA
+lora_r: 16
+lora_alpha: 32
+max_seq_len: 512
+epochs: 3
+lr: 2.0e-4
+micro_batch_size: 8
+grad_accum: 2
+gradient_checkpointing: true
+eval_every: 10

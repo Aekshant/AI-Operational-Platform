@@ -1,0 +1,3 @@
+apiVersion: 1
+providers:
+  - { name: forgeai, folder: ForgeAI, type: file, options: { path: /var/lib/grafana/dashboards } }

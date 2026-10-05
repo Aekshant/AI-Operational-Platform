@@ -1,0 +1,20 @@
+route:
+  receiver: forge-agent
+  group_by: [alertname, deployment]
+  group_wait: 5s
+  group_interval: 30s
+  repeat_interval: 1h
+  routes:
+    # only SLO-impacting alerts page the AI SRE; warnings stay on dashboards
+    - matchers: [severity="critical"]
+      receiver: forge-agent
+    - matchers: [severity="warning"]
+      receiver: "null"
+receivers:
+  - name: forge-agent
+    webhook_configs:
+      - url: http://controlplane:8080/webhooks/alertmanager
+        send_resolved: true
+        http_config:
+          authorization: { type: Bearer, credentials: dev-admin }
+  - name: "null"

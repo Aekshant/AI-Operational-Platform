@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ForgeAI</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #14171c; --muted: #5d6573; --line: #e3e6eb;
+    --good: #1a7f4b; --warn: #a15c00; --bad: #c0392b; --accent: #3355cc; --chip: #eef1f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1216; --panel: #171b21; --ink: #e7eaee; --muted: #98a1ae; --line: #262c35;
+            --good: #4cc38a; --warn: #f0a440; --bad: #ff6b5b; --accent: #7c9bff; --chip: #1f252e; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: 1px solid var(--line);
+           background: var(--panel); position: sticky; top: 0; z-index: 2; }
+  header h1 { font-size: 17px; margin: 0; letter-spacing: .2px; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  header .spacer { flex: 1; }
+  main { max-width: 1240px; margin: 0 auto; padding: 20px 24px 60px; display: grid; gap: 18px; }
+  .row { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 0 0 12px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .tile { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .tile .k { color: var(--muted); font-size: 12px; }
+  .tile .v { font-size: 22px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .tile.bad .v { color: var(--bad); } .tile.warn .v { color: var(--warn); } .tile.good .v { color: var(--good); }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .scroll { overflow-x: auto; }
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--chip); font-size: 12px; }
+  .chip.production, .chip.RESOLVED, .chip.stable { color: var(--good); }
+  .chip.staging, .chip.canary, .chip.AWAITING_APPROVAL, .chip.INVESTIGATING, .chip.VERIFYING, .chip.paused { color: var(--warn); }
+  .chip.rejected, .chip.ESCALATED, .chip.VERIFY_FAILED, .chip.critical { color: var(--bad); }
+  .muted { color: var(--muted); }
+  .incident { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+  .incident h3 { margin: 0 0 4px; font-size: 14px; }
+  .incident ul { margin: 6px 0; padding-left: 18px; }
+  .incident .timeline { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel);
+           color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.danger { color: var(--bad); }
+  input[type=text], input[type=password] { font: inherit; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  .ask { display: flex; gap: 8px; }
+  .ask input { flex: 1; min-width: 0; }
+  pre.answer { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px;
+               margin: 10px 0 0; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .bar { height: 6px; border-radius: 3px; background: var(--chip); overflow: hidden; margin-top: 6px; }
+  .bar > span { display: block; height: 100%; background: var(--accent); }
+  @media (max-width: 600px) { header { padding: 12px 16px; flex-wrap: wrap; } main { padding: 16px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>ForgeAI</h1><span class="sub">fine-tune · evaluate · deploy · operate</span>
+  <span class="spacer"></span>
+  <input id="key" type="password" placeholder="API key" style="width:140px">
+  <span id="status" class="muted"></span>
+</header>
+<main>
+  <section>
+    <h2>Production</h2>
+    <div class="tiles" id="tiles"></div>
+  </section>
+  <div class="row">
+    <section>
+      <h2>Traffic by version</h2>
+      <div class="scroll"><table id="versions"></table></div>
+    </section>
+    <section>
+      <h2>Deployments</h2>
+      <div id="deployments"></div>
+    </section>
+  </div>
+  <section>
+    <h2>Incidents</h2>
+    <div id="incidents"><p class="muted">No incidents.</p></div>
+  </section>
+  <section>
+    <h2>Ask the AI SRE</h2>
+    <form class="ask" id="askform">
+      <input id="question" type="text" placeholder="Why is production slow?  ·  Why did cost increase in the last minutes?">
+      <button class="primary" type="submit">Ask</button>
+    </form>
+    <pre class="answer" id="answer" hidden></pre>
+  </section>
+  <section>
+    <h2>Model registry</h2>
+    <div class="scroll"><table id="models"></table></div>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let key = "dev-admin";
+try { key = localStorage.getItem("forge-key") || key; } catch (e) {}
+$("key").value = key;
+$("key").addEventListener("change", () => { key = $("key").value; try { localStorage.setItem("forge-key", key); } catch (e) {} refresh(); });
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { ...opts, headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json", ...(opts.headers || {}) } });
+  if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 200)}`);
+  return r.json();
+}
+const ms = (s) => s == null ? "—" : `${Math.round(s * 1000)} ms`;
+const pct = (x) => x == null ? "—" : `${(x * 100).toFixed(1)}%`;
+const num = (x, d = 0) => x == null ? "—" : Number(x).toFixed(d);
+const ago = (t) => { const s = Date.now() / 1000 - t; return s < 90 ? `${Math.round(s)}s ago` : s < 5400 ? `${Math.round(s / 60)}m ago` : `${Math.round(s / 3600)}h ago`; };
+
+function tiles(m) {
+  const t = [
+    ["TTFT p95", ms(m.ttft_p95_s), m.ttft_p95_s > 0.5 ? "bad" : "good"],
+    ["P95 latency", ms(m.latency_p95_s), m.latency_p95_s > 3 ? "bad" : ""],
+    ["Tokens/sec", num(m.tokens_per_s), ""],
+    ["Requests/sec", num(m.rps, 1), ""],
+    ["Error rate", pct(m.error_rate || 0), (m.error_rate || 0) > 0.02 ? "bad" : "good"],
+    ["GPU utilization", m.gpu_util_pct == null ? "—" : `${num(m.gpu_util_pct)}%`, m.gpu_util_pct > 90 ? "warn" : ""],
+    ["KV cache", pct(m.kv_cache), m.kv_cache > 0.85 ? "warn" : ""],
+    ["Queue depth", num(m.queue_depth), m.queue_depth > 5 ? "warn" : ""],
+    ["Cost / hour", m.cost_per_hour_usd == null ? "—" : `$${num(m.cost_per_hour_usd, 3)}`, ""],
+  ];
+  $("tiles").innerHTML = t.map(([k, v, c]) => `<div class="tile ${c}"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+}
+
+function versions(bv) {
+  const rows = Object.entries(bv || {});
+  $("versions").innerHTML = `<tr><th>Version</th><th>RPS</th><th>TTFT p95</th><th>P95</th><th>Errors</th></tr>` +
+    (rows.length ? rows.map(([v, r]) => `<tr><td>${esc(v)}</td><td>${num(r.rps, 1)}</td><td>${ms(r.ttft_p95_s)}</td><td>${ms(r.latency_p95_s)}</td><td>${pct(r.error_rate)}</td></tr>`).join("")
+      : `<tr><td colspan="5" class="muted">No traffic yet. Run scripts/loadgen.py</td></tr>`);
+}
+
+function deployments(ds) {
+  $("deployments").innerHTML = ds.length ? ds.map(d => {
+    const w = d.canary_version ? d.canary_weight : 0;
+    return `<div style="margin-bottom:12px">
+      <div><b>${esc(d.name)}</b> <span class="chip ${esc(d.status)}">${esc(d.status)}</span> <span class="muted">rev ${d.revision} · ${d.replicas} replica(s) · ${ago(d.updated_at)}</span></div>
+      <div style="margin-top:6px">stable <b>${esc(d.stable_version)}</b> ${100 - w}%${d.canary_version ? ` · canary <b>${esc(d.canary_version)}</b> ${w}%` : ""}</div>
+      <div class="bar"><span style="width:${w}%"></span></div></div>`;
+  }).join("") : `<p class="muted">No deployments. Run <code>forge demo setup</code>.</p>`;
+}
+
+function models(ms_) {
+  $("models").innerHTML = `<tr><th>Model</th><th>Version</th><th>Stage</th><th>Accuracy</th><th>TTFT p95</th><th>Cost/req</th><th>Base</th></tr>` +
+    ms_.map(m => `<tr><td>${esc(m.name)}</td><td>${esc(m.version)}</td><td><span class="chip ${esc(m.stage)}">${esc(m.stage)}</span></td>
+      <td>${pct(m.metrics.accuracy)}</td><td>${ms(m.metrics.ttft_p95_s)}</td><td>${m.metrics.cost_per_request == null ? "—" : "$" + Number(m.metrics.cost_per_request).toFixed(5)}</td>
+      <td class="muted">${esc(m.base_model)}</td></tr>`).join("");
+}
+
+function incidents(list) {
+  if (!list.length) { $("incidents").innerHTML = `<p class="muted">No incidents.</p>`; return; }
+  $("incidents").innerHTML = list.slice(0, 8).map(i => {
+    const d = i.diagnosis, a = i.proposed_action;
+    const actions = i.state === "AWAITING_APPROVAL" ? `<div style="margin-top:10px;display:flex;gap:8px">
+        <button class="primary" onclick="decide('${esc(i.id)}', true)">Approve ${esc(a?.action)}</button>
+        <button class="danger" onclick="decide('${esc(i.id)}', false)">Reject</button></div>` : "";
+    return `<div class="incident">
+      <h3>${esc(i.title)} <span class="chip ${esc(i.state)}">${esc(i.state)}</span> <span class="chip ${esc(i.severity)}">${esc(i.severity)}</span></h3>
+      <div class="muted">${esc(i.id)} · opened ${ago(i.created_at)} · ${esc(i.source)}</div>
+      ${d ? `<p><b>${esc(d.summary)}</b></p><p>${esc(d.root_cause)}</p>
+        <ul>${(d.evidence || []).map(e => `<li>${esc(e)}</li>`).join("")}</ul>
+        <div class="muted">confidence ${Math.round((d.confidence || 0) * 100)}% · ${esc(d.investigator)}</div>` : ""}
+      ${a ? `<p>Proposed: <b>${esc(a.action)}</b> <code>${esc(JSON.stringify(a.args))}</code><br><span class="muted">${esc(a.rationale)}</span></p>` : ""}
+      ${actions}
+      <div class="timeline">${(i.timeline || []).map(t => `${new Date(t.at * 1000).toLocaleTimeString()} ${esc(t.phase || "")} ${esc(t.note || "")}`).join("<br>")}</div>
+    </div>`;
+  }).join("");
+}
+
+async function decide(id, approved) {
+  try { await api(`/api/incidents/${id}/decision`, { method: "POST", body: JSON.stringify({ approved }) }); refresh(); }
+  catch (e) { alert(e.message); }
+}
+
+$("askform").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const q = $("question").value.trim(); if (!q) return;
+  $("answer").hidden = false; $("answer").textContent = "Investigating…";
+  try { $("answer").textContent = (await api("/api/agent/ask", { method: "POST", body: JSON.stringify({ question: q }) })).answer; }
+  catch (e) { $("answer").textContent = e.message; }
+});
+
+async function refresh() {
+  try {
+    const o = await api("/api/overview");
+    tiles(o.metrics); versions(o.by_version); deployments(o.deployments); models(o.models); incidents(o.incidents);
+    $("status").textContent = `${o.open_incidents} open incident(s) · ${new Date().toLocaleTimeString()}`;
+  } catch (e) { $("status").textContent = e.message; }
+}
+refresh(); setInterval(refresh, 3000);
+</script>
+</body>
+</html>

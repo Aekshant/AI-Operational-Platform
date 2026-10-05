@@ -1,0 +1,52 @@
+groups:
+  - name: forge-slo-recording
+    rules:
+      - record: forge:ttft_p95:1m
+        expr: histogram_quantile(0.95, sum by (deployment, le) (rate(forge_ttft_seconds_bucket[1m])))
+      - record: forge:latency_p95:1m
+        expr: histogram_quantile(0.95, sum by (deployment, le) (rate(forge_request_duration_seconds_bucket[1m])))
+      - record: forge:error_ratio:1m
+        expr: |
+          sum by (deployment) (rate(forge_requests_total{code!="200"}[1m]))
+            / sum by (deployment) (rate(forge_requests_total[1m]))
+      - record: forge:cost_usd_per_hour
+        expr: sum by (deployment, version) (rate(forge_cost_usd_total[5m])) * 3600
+
+  - name: forge-slo-alerts
+    rules:
+      - alert: InferenceTTFTSLOViolation
+        expr: forge:ttft_p95:1m > 0.5 and on (deployment) sum by (deployment) (rate(forge_requests_total[1m])) > 0.2
+        for: 30s
+        labels: { severity: critical, slo: ttft }
+        annotations:
+          summary: "Inference SLO violation: TTFT p95 {{ $value | humanizeDuration }} on {{ $labels.deployment }} (SLO 500ms)"
+      - alert: InferenceErrorRateHigh
+        expr: forge:error_ratio:1m > 0.02
+        for: 1m
+        labels: { severity: critical, slo: errors }
+        annotations:
+          summary: "Error rate {{ $value | humanizePercentage }} on {{ $labels.deployment }}"
+      - alert: InferenceQueueBacklog
+        expr: sum by (backend) (forge_queue_depth) > 10
+        for: 1m
+        labels: { severity: warning }
+        annotations:
+          summary: "Admission queue backlog on {{ $labels.backend }}"
+      - alert: CircuitBreakerOpen
+        expr: max by (backend) (forge_breaker_state) == 2
+        for: 15s
+        labels: { severity: warning }
+        annotations:
+          summary: "Circuit breaker open for {{ $labels.backend }}; traffic is failing over"
+      - alert: GatewayRoutingStale
+        expr: max(forge_routing_stale_seconds) > 30
+        for: 1m
+        labels: { severity: warning }
+        annotations:
+          summary: "Gateway cannot reach the control plane; serving last-known-good routes"
+      - alert: GPUMemoryPressure
+        expr: sum by (version) (DCGM_FI_DEV_FB_USED) / (sum by (version) (DCGM_FI_DEV_FB_USED) + sum by (version) (DCGM_FI_DEV_FB_FREE)) > 0.9
+        for: 2m
+        labels: { severity: warning }
+        annotations:
+          summary: "GPU memory above 90% on model server {{ $labels.version }}"

@@ -1,0 +1,51 @@
+[project]
+name = "forgeai"
+version = "0.1.0"
+description = "Self-hosted platform for fine-tuning, evaluating, deploying and operating small language models."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "httpx>=0.27",
+  "pydantic>=2.7",
+  "prometheus-client>=0.20",
+  "typer>=0.12",
+  "rich>=13",
+  "pyyaml>=6",
+  "opentelemetry-sdk>=1.25",
+  "opentelemetry-exporter-otlp-proto-http>=1.25",
+  "opentelemetry-instrumentation-fastapi>=0.46b0",
+  "opentelemetry-instrumentation-httpx>=0.46b0",
+  "langgraph>=0.2.60",
+  "langgraph-checkpoint-sqlite>=2.0",
+  "anthropic>=0.60",
+  "mcp>=1.2",
+]
+
+[project.optional-dependencies]
+train = ["torch>=2.3", "transformers>=4.56", "peft>=0.12", "datasets>=2.20", "accelerate>=0.33"]
+qlora = ["bitsandbytes>=0.43"]
+mlflow = ["mlflow>=2.14"]
+dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+forge = "forge.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["forge"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["F", "E9", "B", "I"]
+ignore = ["B008"]  # Depends()/typer.Option() in defaults is the FastAPI/Typer idiom

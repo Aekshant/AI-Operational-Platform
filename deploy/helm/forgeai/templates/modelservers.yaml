@@ -1,0 +1,86 @@
+{{- range .Values.modelServers }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Release.Name }}-{{ .name }}
+  labels: {{- include "forgeai.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: model-server
+    forgeai.dev/model: {{ .model }}
+    forgeai.dev/version: {{ .version }}
+spec:
+  replicas: {{ .replicas }}
+  strategy: { type: RollingUpdate, rollingUpdate: { maxUnavailable: 0, maxSurge: 1 } }
+  selector: { matchLabels: { app.kubernetes.io/name: {{ $.Release.Name }}-{{ .name }} } }
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $.Release.Name }}-{{ .name }}
+        app.kubernetes.io/component: model-server
+        forgeai.dev/model: {{ .model }}
+        forgeai.dev/version: {{ .version }}
+    spec:
+      {{- with .nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      tolerations: [{ key: nvidia.com/gpu, operator: Exists, effect: NoSchedule }]
+      containers:
+        - name: vllm
+          image: {{ $.Values.vllm.image }}
+          args:
+            - --model={{ .baseModel }}
+            - --enable-lora
+            - --lora-modules={{ .model }}-{{ .version }}={{ .adapterPath }}
+            - --max-num-seqs={{ .maxNumSeqs }}
+            - --gpu-memory-utilization={{ .gpuMemoryUtilization }}
+            - --max-model-len={{ .maxModelLen }}
+            - --enable-prefix-caching
+            - --port=8000
+          ports: [{ name: http, containerPort: 8000 }]
+          {{- if $.Values.vllm.hfTokenSecret }}
+          env:
+            - name: HF_TOKEN
+              valueFrom: { secretKeyRef: { name: {{ $.Values.vllm.hfTokenSecret }}, key: HF_TOKEN } }
+          {{- end }}
+          startupProbe: { httpGet: { path: /health, port: http }, periodSeconds: 10, failureThreshold: 60 }
+          readinessProbe: { httpGet: { path: /health, port: http }, periodSeconds: 5 }
+          resources:
+            limits: { {{ .gpu.type }}: {{ .gpu.count }} }
+          volumeMounts:
+            - { name: adapters, mountPath: /adapters, readOnly: true }
+            - { name: shm, mountPath: /dev/shm }
+            - { name: hf-cache, mountPath: /root/.cache/huggingface }
+      volumes:
+        - name: adapters
+          persistentVolumeClaim: { claimName: {{ $.Values.vllm.adaptersPvc }} }
+        - { name: shm, emptyDir: { medium: Memory, sizeLimit: 2Gi } }
+        - { name: hf-cache, emptyDir: {} }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Release.Name }}-{{ .name }}
+  labels: {{- include "forgeai.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: model-server
+spec:
+  selector: { app.kubernetes.io/name: {{ $.Release.Name }}-{{ .name }} }
+  ports: [{ name: http, port: 8000, targetPort: http }]
+{{- if $.Values.keda.enabled }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ $.Release.Name }}-{{ .name }}
+spec:
+  scaleTargetRef: { name: {{ $.Release.Name }}-{{ .name }} }
+  minReplicaCount: {{ $.Values.keda.minReplicas }}
+  maxReplicaCount: {{ $.Values.keda.maxReplicas }}
+  cooldownPeriod: 300   # GPU pods are slow to start: scale down conservatively
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: {{ $.Values.observability.prometheusUrl }}
+        query: sum(vllm:num_requests_waiting{version="{{ .version }}", model="{{ .model }}"})
+        threshold: {{ $.Values.keda.waitingThreshold | quote }}
+{{- end }}
+{{- end }}

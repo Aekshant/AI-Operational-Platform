@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-gateway
+  labels: {{- include "forgeai.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+spec:
+  replicas: {{ .Values.gateway.replicas }}
+  selector: { matchLabels: { app.kubernetes.io/name: {{ .Release.Name }}-gateway } }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: {{ .Release.Name }}-gateway, app.kubernetes.io/component: gateway }
+    spec:
+      securityContext: { runAsNonRoot: true, runAsUser: 10001 }
+      terminationGracePeriodSeconds: 60   # let in-flight streams finish
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector: { matchLabels: { app.kubernetes.io/name: {{ .Release.Name }}-gateway } }
+      containers:
+        - name: gateway
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: [forge, serve, gateway, --port, "8000"]
+          ports: [{ name: http, containerPort: 8000 }]
+          env:
+            {{- include "forgeai.commonEnv" . | nindent 12 }}
+            - name: FORGE_GATEWAY_KEY
+              valueFrom: { secretKeyRef: { name: {{ include "forgeai.secretName" . }}, key: gatewayKey } }
+            - { name: FORGE_MAX_INFLIGHT, value: {{ .Values.gateway.maxInflightPerBackend | quote }} }
+            - { name: FORGE_MAX_QUEUE, value: {{ .Values.gateway.maxQueue | quote }} }
+          readinessProbe: { httpGet: { path: /healthz, port: http }, periodSeconds: 5 }
+          livenessProbe: { httpGet: { path: /healthz, port: http }, periodSeconds: 20 }
+          lifecycle: { preStop: { exec: { command: [sleep, "10"] } } }   # drain from endpoints first
+          resources: {{- toYaml .Values.gateway.resources | nindent 12 }}
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-gateway
+  labels: {{- include "forgeai.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+spec:
+  selector: { app.kubernetes.io/name: {{ .Release.Name }}-gateway }
+  ports: [{ name: http, port: 8000, targetPort: http }]
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-gateway
+spec:
+  minAvailable: 1
+  selector: { matchLabels: { app.kubernetes.io/name: {{ .Release.Name }}-gateway } }
+{{- if .Values.gateway.hpa.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-gateway
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: {{ .Release.Name }}-gateway }
+  minReplicas: {{ .Values.gateway.hpa.min }}
+  maxReplicas: {{ .Values.gateway.hpa.max }}
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: {{ .Values.gateway.hpa.targetCPU }} } }
+{{- end }}
